@@ -1,0 +1,35 @@
+name: Mirror Solstice dependencies
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Solstice branch, tag or commit whose lock file to mirror
+        required: true
+        default: main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Checkout mirror scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - name: Mirror the pinned packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOLSTICE_REF: ${{ inputs.ref }}
+        run: python mirror.py --ref "$SOLSTICE_REF" --work "$RUNNER_TEMP/mirror"
